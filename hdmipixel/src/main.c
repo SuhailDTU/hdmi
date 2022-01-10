@@ -29,7 +29,7 @@ int main(){
 
 	//drawSquare(25, 30, 70, 80, 0xFFFF00);
 
-		placeMovableObject(1, 2, 1);
+		//placeMovableObject(1, 2, 1);
 
 /*
 		//player 1
@@ -80,31 +80,33 @@ int main(){
 		setPlayerCards(1, 3, 3, 1);
 		setPlayerCards(1, 4, 3, 2);
 
-		setPlayerCards(2, 5, 3, 1);
-		setPlayerCards(2, 6, 3, 2);
+		setPlayerCards(2, 5, 1, 1);
+		setPlayerCards(2, 6, 1, 2);
 
-		setPlayerCards(3, 7, 3, 1);
-		setPlayerCards(3, 8, 3, 2);
+		setPlayerCards(3, 2, 4, 1);
+		setPlayerCards(3, 3, 4, 2);
 
-		setPlayerCards(4, 9, 3, 1);
-		setPlayerCards(4, 10, 3, 2);
+		setPlayerCards(4, 4, 4, 1);
+		setPlayerCards(4, 5, 4, 2);
 
-		setPlayerCards(5, 11, 3, 1);
-		setPlayerCards(5, 12, 3, 2);
+		setPlayerCards(5, 11, 2, 1);
+		setPlayerCards(5, 12, 2, 2);
 
-		setPlayerCards(6, 13, 3, 1);
-		setPlayerCards(6, 2, 3, 2);
+		setPlayerCards(6, 13, 2, 1);
+		setPlayerCards(6, 1, 2, 2);
 
-		setPlayerCards(7, 1, 3, 1);
-		setPlayerCards(7, 2, 3, 2);
+		setPlayerCards(7, 2, 1, 1);
+		setPlayerCards(7, 3, 1, 2);
+
+		//placeBacksideOfCard(250, 250);
 
 
 		//initial draw, rest is handled by interrupts
 		updateBackground();
 		drawLayer();
 		setFrameFlag(1);
-
 		startOrStopScreenUpdate(1);//enable interrupts
+
 		while(1){
 
 

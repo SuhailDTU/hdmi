@@ -84,7 +84,7 @@ u8 background[DEMO_MAX_FRAME];//to save background
 
 int graphicsArray[GRANUALITYHEIGHT][GRANUALITYWIDTH] = {0};
 int locationArray[GRANUALITYHEIGHT][GRANUALITYWIDTH] = {0};
-int cardGraphicArray[13*4][60][30];
+int cardGraphicArray[13*4 + 2][60][30];
 
 
 int currentPlayer = 0;
@@ -112,7 +112,12 @@ int player7Balance = 7777;
 int player8Balance = 8888;
 int* balanceArray[8] = {&player1Balance, &player2Balance, &player3Balance, &player4Balance, &player5Balance, &player6Balance, &player7Balance, &player8Balance};
 
-int newFrame = 0;
+int newFrame = 0;//flag to show whether a new frame ahs been drawn
+
+enum menuChoices {CALL_CHECK, FOLD, RAISE};
+enum menuChoices menuChoice = CALL_CHECK;
+
+int callOrCheck = 1; // call 1, check 0;
 
 /* ------------------------------------------------------------ */
 /*				Procedure Definitions							*/
@@ -204,7 +209,6 @@ void swap_handler(void *InstancePtr){
 
 	if(getFrameFlag() == 1 ){
 		//printf("\r\nswap handler works");
-		//status = DisplayStop(&dispCtrl);
 		swapFrame();
 		TimerDelay(500);
 		setFrameFlag(0);
@@ -352,19 +356,25 @@ void drawLayer(){
 				}
 			}
 			else if (locationArray[i][j] > 0 && locationArray[i][j] < 53){//show cards
-				if(locationArray[i][j] == 1){
+				/*if(locationArray[i][j] == 1){
 					drawSquare2(blockwidth*10,blockheight*10, j*blockwidth, i*blockheight, 0xFFFFFF, dispCtrl.framePtr[nextFrame()]);
-				}else{
-					showCard(locationArray[i][j], j,  i);
-				}
+				}*/
+				showCard(locationArray[i][j], j,  i);
 			}
 			else if (locationArray[i][j] >= 61 && locationArray[i][j] <= 68 ){//player bets
 				showChip(*(betValArray[(locationArray[i][j]-61)]), j, i);
 			}else if(locationArray[i][j] >= 69 && locationArray[i][j] <= 76){//player balances
 				showBalanceBanner(*(balanceArray[(locationArray[i][j] - 69)]), (locationArray[i][j] - 69), j, i);
+			}else if(locationArray[i][j] == 77){
+				showCard(53, j,  i);
 			}
 		}
 	}
+
+	//draw menu on top of everything else
+	drawMenu(580, 450, callOrCheck);
+
+
 	XTime_GetTime(&start);
 	flush(dispCtrl.framePtr[nextFrame()]);
 	XTime_GetTime(&end);
@@ -382,7 +392,7 @@ void placeObject(int x, int y, int type){
 }
 
 void getInput(){
-	startOrStopScreenUpdate(0);
+	//startOrStopScreenUpdate(0);
 	/* Wait for data on UART */
 	char userInput = 0;
 	int oldx = location.x;
@@ -468,7 +478,16 @@ void getInput(){
 	else if(userInput == 'o'){//testing being able to alter bet counter
 		setPlayerBet(0, 6969);
 	}
-	startOrStopScreenUpdate(1);
+	else if(userInput == 'p'){//for testing menu UI
+		menuUp();
+	}
+	else if(userInput == 'u'){//for testing menu UI
+		menuDown();
+	}
+	else if(userInput == 'y'){
+		(callOrCheck == 1) ? setcallCheck(0) : setcallCheck(1);
+	}
+	//startOrStopScreenUpdate(1);
 }
 void createBackground(){
 	int topBotGap = GRANUALITYHEIGHT/10;
@@ -728,32 +747,6 @@ void setPlayerBalance(int player, int balance){
 	}
 }
 
-void fillInCardArray(){
-	size_t cardsSize = sizeof(aceOfDiamonds);
-	memcpy(cardGraphicArray[0], clover2 ,cardsSize);
-	memcpy(cardGraphicArray[1], clover2 ,cardsSize);
-	memcpy(cardGraphicArray[2], clover2 ,cardsSize);
-
-	//memcpy(cardGraphicArray[rankSuitToIndex(1, 1)], aceOfHearts ,cardsSize);
-
-
-	memcpy(cardGraphicArray[rankSuitToIndex(1, 3)], aceOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(2, 3)], twoOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(3, 3)], threeOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(4, 3)], fourOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(5, 3)], fiveOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(6, 3)], sixOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(7, 3)], sevenOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(7, 3)], sevenOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(8, 3)], eightOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(9, 3)], nineOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(10, 3)], tenOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(11, 3)], jackOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(12, 3)], queenOfDiamonds ,cardsSize);
-	memcpy(cardGraphicArray[rankSuitToIndex(13, 3)], kingOfDiamonds ,cardsSize);
-
-}
-
 void setPlayerCards(int player, int rank, int suit, int cardNum){
 	int x;
 	int y;
@@ -768,7 +761,7 @@ void setPlayerCards(int player, int rank, int suit, int cardNum){
 	placeObject(x, y, rankSuitToIndex(rank, suit));
 }
 int rankSuitToIndex(int rank, int suit){
-	return ((rank-1)+(suit-1)*13);
+	return ((rank)+(suit-1)*13);
 }
 void placeDealerCard(int rank, int suit){
 	if(currentAmountOfDealerCards < 5){
@@ -814,6 +807,65 @@ void startOrStopScreenUpdate(int startStop){
 		XScuGic_Disable(&INTCInst,64);
 	}
 }
+
+void setFrameFlag(int i){
+	newFrame = i;
+}
+int getFrameFlag(){
+	return newFrame;
+}
+void drawMenu(int x, int y, int callOrCheck){
+	int linefill1 = 0xFFFFFF;
+	int linefill2 = 0xFFFFFF;
+	int linefill3 = 0xFFFFFF;
+
+	switch(menuChoice){
+		case CALL_CHECK:
+			linefill1 = 0xFFFF00;
+		break;
+		case FOLD:
+			linefill2 = 0xFFFF00;
+		break;
+		case RAISE:
+			linefill3 = 0xFFFF00;
+		break;
+	}
+	if(callOrCheck){
+		generalDraw(60, 30, call, linefill1, 0x2457AE, x, y);
+	}else{
+		generalDraw(60, 30, check, linefill1, 0x2457AE, x, y);
+	}
+	generalDraw(60, 30, fold, linefill2, 0x2457AE, x, (y+30));
+	generalDraw(60, 30, raise, linefill3, 0x2457AE, x, (y+60));
+}
+void generalDraw(int arraywidth, int arrayheight, int diagram[arrayheight][arraywidth], int color1, int color2, int x, int y){
+	int blockwidth = dispCtrl.vMode.width/GRANUALITYWIDTH;
+	int blockheight = dispCtrl.vMode.height/GRANUALITYHEIGHT;
+
+	for(int i = 0; i < arrayheight; i++){
+			for(int j = 0; j < arraywidth; j++){
+				if(diagram[i][j]== 0){
+					drawSquare2(blockwidth,blockheight, (x + j)*blockwidth, (y + i)*blockheight, color2, dispCtrl.framePtr[nextFrame()]);
+				}else if(diagram[i][j] == 1){
+					drawSquare2(blockwidth,blockheight, (x + j)*blockwidth, (y + i)*blockheight, color1, dispCtrl.framePtr[nextFrame()]);
+				}
+			}
+	}
+
+}
+void menuUp(){
+	menuChoice = (++menuChoice % 3);
+}
+void menuDown(){
+	menuChoice--;
+	if(menuChoice == 255){
+		menuChoice = RAISE;
+	}
+}
+void placeBacksideOfCard(int x, int y){
+	placeObject(x,y, 77);
+}
+void setcallCheck(int i){callOrCheck = i;}
 void numToDigits(int num, int* dig7, int* dig6, int* dig5, int* dig4, int* dig3, int* dig2, int* dig1){
     int currentNum = num;
     int count = 0;
@@ -895,10 +947,65 @@ void numToDigits(int num, int* dig7, int* dig6, int* dig5, int* dig4, int* dig3,
     *dig1 = count;
     count = 0;
 }
-void setFrameFlag(int i){
-	newFrame = i;
-}
-int getFrameFlag(){
-	return newFrame;
-}
+void fillInCardArray(){
+	size_t cardsSize = sizeof(aceOfDiamonds);
 
+	memcpy(cardGraphicArray[rankSuitToIndex(1, 1)], aceOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(2, 1)], twoOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(3, 1)], threeOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(4, 1)], fourOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(5, 1)], fiveOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(6, 1)], sixOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(7, 1)], sevenOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(8, 1)], eightOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(9, 1)], nineOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(10, 1)], tenOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(11, 1)], jackOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(12, 1)], queenOfHearts ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(12, 1)], kingOfHearts ,cardsSize);
+
+	memcpy(cardGraphicArray[rankSuitToIndex(1, 2)], aceOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(2, 2)], twoOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(3, 2)], threeOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(4, 2)], fourOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(5, 2)], fiveOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(6, 2)], sixOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(7, 2)], sevenOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(8, 2)], eightOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(9, 2)], nineOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(10, 2)], tenOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(11, 2)], jackOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(12, 2)], queenOfClubs ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(13, 2)], kingOfClubs ,cardsSize);
+
+	memcpy(cardGraphicArray[rankSuitToIndex(1, 3)], aceOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(2, 3)], twoOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(3, 3)], threeOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(4, 3)], fourOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(5, 3)], fiveOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(6, 3)], sixOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(7, 3)], sevenOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(7, 3)], sevenOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(8, 3)], eightOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(9, 3)], nineOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(10, 3)], tenOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(11, 3)], jackOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(12, 3)], queenOfDiamonds ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(13, 3)], kingOfDiamonds ,cardsSize);
+
+	memcpy(cardGraphicArray[rankSuitToIndex(1, 4)], aceOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(2, 4)], twoOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(3, 4)], threeOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(4, 4)], fourOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(5, 4)], fiveOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(6, 4)], sixOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(7, 4)], sevenOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(8, 4)], eightOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(9, 4)], nineOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(10, 4)], tenOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(11, 4)], jackOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(12, 4)], queenOfSpades ,cardsSize);
+	memcpy(cardGraphicArray[rankSuitToIndex(13, 4)], kingOfSpades ,cardsSize);
+
+	memcpy(cardGraphicArray[53], backside, cardsSize);
+}

@@ -1,5 +1,6 @@
 src/main.o src/main.o: ../src/main.c ../src/graphics.h \
  ../../hdmibsp_vsyncfix/ps7_cortexa9_0/include/xil_types.h \
+ ../src/hearts.h ../src/diamonds.h ../src/clubs.h ../src/spades.h \
  ../src/display_ctrl/display_ctrl.h ../src/display_ctrl/vga_modes.h \
  ../../hdmibsp_vsyncfix/ps7_cortexa9_0/include/xaxivdma.h \
  ../../hdmibsp_vsyncfix/ps7_cortexa9_0/include/xaxivdma_hw.h \
@@ -24,6 +25,14 @@ src/main.o src/main.o: ../src/main.c ../src/graphics.h \
 ../src/graphics.h:
 
 ../../hdmibsp_vsyncfix/ps7_cortexa9_0/include/xil_types.h:
+
+../src/hearts.h:
+
+../src/diamonds.h:
+
+../src/clubs.h:
+
+../src/spades.h:
 
 ../src/display_ctrl/display_ctrl.h:
 
