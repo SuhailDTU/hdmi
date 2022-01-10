@@ -1,8 +1,8 @@
-12:05:55 **** Auto Build of configuration Debug for project hdmipixel ****
+12:25:07 **** Auto Build of configuration Debug for project hdmipixel ****
 make pre-build main-build 
 a9-linaro-pre-build-step
 ' '
 make: Ingenting at gøre for 'main-build'.
 
-12:05:56 Build Finished (took 395ms)
+12:25:07 Build Finished (took 456ms)
 
